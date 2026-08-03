@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_info.dart';
+
 /// Home page with game start screen.
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -152,6 +154,22 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Licence and attribution. This game is a derivative work of
+                  // Ben Webb's GPL-licensed dopewars, so the source offer below
+                  // has to stay visible wherever the app is distributed.
+                  Text(
+                    'Based on dopewars by Ben Webb\n'
+                    'Licensed under the GNU GPL v2 or later\n'
+                    '$sourceUrl',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 11,
+                      height: 1.6,
                     ),
                   ),
                 ],

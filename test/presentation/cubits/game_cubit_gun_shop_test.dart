@@ -1,11 +1,15 @@
 import 'package:dopewars_flutter/core/utils/random_generator.dart';
+import 'package:dopewars_flutter/core/value_objects/money.dart';
 import 'package:dopewars_flutter/domain/banking/services/interest_calculator.dart';
 import 'package:dopewars_flutter/domain/combat/entities/gun.dart';
 import 'package:dopewars_flutter/domain/game/services/random_encounter_service.dart';
+import 'package:dopewars_flutter/domain/location/entities/location.dart';
+import 'package:dopewars_flutter/domain/npc/repositories/npc_repository.dart';
 import 'package:dopewars_flutter/domain/trading/services/price_generator.dart';
 import 'package:dopewars_flutter/presentation/cubits/game/game_cubit.dart';
 import 'package:dopewars_flutter/presentation/cubits/game/game_state.dart';
 import 'package:dopewars_flutter/presentation/cubits/game_state/game_state_cubit.dart';
+import 'package:dopewars_flutter/presentation/cubits/npc/npc_network_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -14,7 +18,7 @@ void main() {
     late GameStateCubit gameStateCubit;
 
     setUp(() {
-      final random = DefaultRandomGenerator();
+      final random = MockRandomGenerator(intValues: [DefaultLocations.gunShopIndex(), 50, 50, 50, 50, 50], doubleValues: [0.99]);
       final priceGenerator = PriceGenerator(random: random);
       final interestCalculator = const InterestCalculator();
       gameStateCubit = GameStateCubit();
@@ -24,10 +28,18 @@ void main() {
         priceGenerator: priceGenerator,
         interestCalculator: interestCalculator,
         gameStateCubit: gameStateCubit,
-        encounterService: RandomEncounterService(random: random),
+        npcNetworkCubit: NpcNetworkCubit(npcRepository: const NpcRepository()),
+        encounterService: RandomEncounterService(
+          random: MockRandomGenerator(intValues: [99]),
+        ),
       );
 
       cubit.startGame('Test Player');
+      // Guns cost $2,900+, more than the $2,000 starting cash, so take a
+      // loan first. The start location has both a loan shark and a gun shop.
+      cubit.visitLoanShark();
+      cubit.borrowMoney(const Money(5500));
+      cubit.leaveLocation();
     });
 
     tearDown(() {
@@ -36,7 +48,7 @@ void main() {
     });
 
     test('visitGunShop transitions to gun shop location', () {
-      cubit.travel(2); // Central Park = Gun Shop location
+      cubit.travel(DefaultLocations.gunShopIndex());
       cubit.visitGunShop();
 
       expect(cubit.state, isA<GameAtLocation>());
@@ -44,7 +56,7 @@ void main() {
     });
 
     test('buyGun adds gun to inventory', () {
-      cubit.travel(2);
+      cubit.travel(DefaultLocations.gunShopIndex());
       cubit.visitGunShop();
 
       final gunToBuy = DefaultGuns.byIndex(0);
@@ -56,7 +68,7 @@ void main() {
     });
 
     test('buyGun sends confirmation message', () {
-      cubit.travel(2);
+      cubit.travel(DefaultLocations.gunShopIndex());
       cubit.visitGunShop();
 
       cubit.buyGun(0, 1);
@@ -66,7 +78,7 @@ void main() {
     });
 
     test('leaveLocation returns to playing state', () {
-      cubit.travel(2);
+      cubit.travel(DefaultLocations.gunShopIndex());
       cubit.visitGunShop();
 
       cubit.leaveLocation();

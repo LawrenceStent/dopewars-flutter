@@ -3,11 +3,17 @@ import 'package:dopewars_flutter/core/utils/random_generator.dart';
 import 'package:dopewars_flutter/core/value_objects/money.dart';
 import 'package:dopewars_flutter/domain/banking/services/interest_calculator.dart';
 import 'package:dopewars_flutter/domain/location/entities/location.dart';
+import 'package:dopewars_flutter/domain/npc/repositories/npc_repository.dart';
 import 'package:dopewars_flutter/domain/trading/services/price_generator.dart';
 import 'package:dopewars_flutter/presentation/cubits/game/game_cubit.dart';
 import 'package:dopewars_flutter/presentation/cubits/game/game_state.dart';
 import 'package:dopewars_flutter/presentation/cubits/game_state/game_state_cubit.dart';
+import 'package:dopewars_flutter/presentation/cubits/npc/npc_network_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// Index of a location that has no bank, for negative-path tests.
+final _noBankIndex =
+    DefaultLocations.all.indexWhere((l) => !l.hasFacility(LocationFacility.bank));
 
 void main() {
   late GameCubit cubit;
@@ -15,14 +21,16 @@ void main() {
   late GameStateCubit gameStateCubit;
 
   setUp(() {
-    // Use mock that always returns the bank/loan shark location (index 1)
-    mockRandom = MockRandomGenerator(intValues: [1, 50, 50, 50, 50, 50]);
+    // Start at the bank/loan shark location, whichever index that is.
+    mockRandom =
+        MockRandomGenerator(intValues: [DefaultLocations.bankIndex(), 50, 50, 50, 50, 50], doubleValues: [0.99]);
     gameStateCubit = GameStateCubit();
     cubit = GameCubit(
       random: mockRandom,
       priceGenerator: PriceGenerator(random: mockRandom),
       interestCalculator: const InterestCalculator(),
       gameStateCubit: gameStateCubit,
+      npcNetworkCubit: NpcNetworkCubit(npcRepository: const NpcRepository()),
     );
   });
 
@@ -49,14 +57,15 @@ void main() {
     blocTest<GameCubit, GameState>(
       'visitBank shows message when not at bank location',
       build: () {
-        // Start at location 0 (Bronx) which is not the bank
-        final random = MockRandomGenerator(intValues: [0, 50, 50]);
+        // Start somewhere without a bank.
+        final random = MockRandomGenerator(intValues: [_noBankIndex, 50, 50], doubleValues: [0.99]);
         final stateCubit = GameStateCubit();
         return GameCubit(
           random: random,
           priceGenerator: PriceGenerator(random: random),
           interestCalculator: const InterestCalculator(),
           gameStateCubit: stateCubit,
+          npcNetworkCubit: NpcNetworkCubit(npcRepository: const NpcRepository()),
         );
       },
       seed: () {

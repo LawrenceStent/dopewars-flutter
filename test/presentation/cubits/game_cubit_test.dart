@@ -3,23 +3,27 @@ import 'package:dopewars_flutter/core/constants/game_constants.dart';
 import 'package:dopewars_flutter/core/utils/random_generator.dart';
 import 'package:dopewars_flutter/core/value_objects/money.dart';
 import 'package:dopewars_flutter/domain/banking/services/interest_calculator.dart';
+import 'package:dopewars_flutter/domain/game/services/random_encounter_service.dart';
+import 'package:dopewars_flutter/domain/location/entities/location.dart';
+import 'package:dopewars_flutter/domain/npc/repositories/npc_repository.dart';
 import 'package:dopewars_flutter/domain/trading/entities/drug.dart';
 import 'package:dopewars_flutter/domain/trading/services/price_generator.dart';
 import 'package:dopewars_flutter/presentation/cubits/game/game_cubit.dart';
 import 'package:dopewars_flutter/presentation/cubits/game/game_state.dart';
 import 'package:dopewars_flutter/presentation/cubits/game_state/game_state_cubit.dart';
+import 'package:dopewars_flutter/presentation/cubits/npc/npc_network_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('GameCubit', () {
     late GameCubit cubit;
-    late DefaultRandomGenerator random;
+    late RandomGenerator random;
     late PriceGenerator priceGenerator;
     late InterestCalculator interestCalculator;
     late GameStateCubit gameStateCubit;
 
     setUp(() {
-      random = DefaultRandomGenerator(42); // Seed for reproducibility
+      random = MockRandomGenerator(intValues: [DefaultLocations.bankIndex(), 50, 50, 50, 50, 50], doubleValues: [0.99]); // Seed for reproducibility
       priceGenerator = PriceGenerator(random: random);
       interestCalculator = const InterestCalculator();
       gameStateCubit = GameStateCubit();
@@ -28,6 +32,10 @@ void main() {
         priceGenerator: priceGenerator,
         interestCalculator: interestCalculator,
         gameStateCubit: gameStateCubit,
+        npcNetworkCubit: NpcNetworkCubit(npcRepository: const NpcRepository()),
+        encounterService: RandomEncounterService(
+          random: MockRandomGenerator(intValues: [99]),
+        ),
       );
     });
 
@@ -306,7 +314,7 @@ void main() {
 
   group('PriceGenerator', () {
     test('generates market with available drugs', () {
-      final random = DefaultRandomGenerator(42);
+      final random = MockRandomGenerator(intValues: [DefaultLocations.bankIndex(), 50, 50, 50, 50, 50], doubleValues: [0.99]);
       final generator = PriceGenerator(random: random);
 
       final market = generator.generateMarket(0); // Bronx
@@ -315,17 +323,19 @@ void main() {
     });
 
     test('respects location drug availability', () {
-      final random = DefaultRandomGenerator(42);
+      final random = MockRandomGenerator(intValues: [DefaultLocations.bankIndex(), 50, 50, 50, 50, 50], doubleValues: [0.99]);
       final generator = PriceGenerator(random: random);
 
-      // Manhattan has minDrug=4, maxDrug=10
-      final market = generator.generateMarket(3); // Manhattan
+      // Availability is a per-location set of drug indices, so check every
+      // generated price against the location's own list.
+      const locationIndex = 3;
+      final location = DefaultLocations.byIndex(locationIndex);
+      final market = generator.generateMarket(locationIndex);
 
-      // Should not have drugs outside the range
+      expect(market.prices, isNotEmpty);
       for (final entry in market.prices.entries) {
-        final drugIndex = entry.key.index;
-        expect(drugIndex >= 4 && drugIndex < 10, true,
-            reason: 'Drug ${entry.key} should be in Manhattan range');
+        expect(location.hasDrug(entry.key.index), true,
+            reason: 'Drug ${entry.key} is not sold in ${location.name}');
       }
     });
   });

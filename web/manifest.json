@@ -1,11 +1,11 @@
 {
-    "name": "dopewars_flutter",
-    "short_name": "dopewars_flutter",
+    "name": "Dopewars",
+    "short_name": "Dopewars",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "description": "Buy low, sell high, dodge the cops. A modern browser remake of the classic dopewars trading game. 31 days to clear your debt and get rich.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -3,10 +3,13 @@ import 'package:dopewars_flutter/core/utils/random_generator.dart';
 import 'package:dopewars_flutter/core/value_objects/money.dart';
 import 'package:dopewars_flutter/domain/banking/services/interest_calculator.dart';
 import 'package:dopewars_flutter/domain/game/services/random_encounter_service.dart';
+import 'package:dopewars_flutter/domain/location/entities/location.dart';
+import 'package:dopewars_flutter/domain/npc/repositories/npc_repository.dart';
 import 'package:dopewars_flutter/domain/trading/services/price_generator.dart';
 import 'package:dopewars_flutter/presentation/cubits/game/game_cubit.dart';
 import 'package:dopewars_flutter/presentation/cubits/game/game_state.dart';
 import 'package:dopewars_flutter/presentation/cubits/game_state/game_state_cubit.dart';
+import 'package:dopewars_flutter/presentation/cubits/npc/npc_network_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -15,7 +18,7 @@ void main() {
     late GameStateCubit gameStateCubit;
 
     setUp(() {
-      final random = DefaultRandomGenerator();
+      final random = MockRandomGenerator(intValues: [DefaultLocations.roughPubIndex(), 50, 50, 50, 50, 50], doubleValues: [0.99]);
       final priceGenerator = PriceGenerator(random: random);
       final interestCalculator = const InterestCalculator();
       gameStateCubit = GameStateCubit();
@@ -25,7 +28,10 @@ void main() {
         priceGenerator: priceGenerator,
         interestCalculator: interestCalculator,
         gameStateCubit: gameStateCubit,
-        encounterService: RandomEncounterService(random: random),
+        npcNetworkCubit: NpcNetworkCubit(npcRepository: const NpcRepository()),
+        encounterService: RandomEncounterService(
+          random: MockRandomGenerator(intValues: [99]),
+        ),
       );
 
       cubit.startGame('Test Player');
