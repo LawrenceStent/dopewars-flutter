@@ -8,7 +8,7 @@ the cops, random muggings, and an interest rate that never sleeps.
 
 ## Play
 
-Web build: *(add your deployed URL here once it's live)*
+**[Play in your browser →](https://dopewars-flutter.web.app)**
 
 ## Features
 
